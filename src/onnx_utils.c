@@ -18,11 +18,14 @@ int load_model(const OrtApi* ort, const char* model_path) {
     OrtSession* session;
     status = ort->CreateSession(env, model_path, session_options, &session);
     if (status != NULL) {
-        fprintf(stderr, "Failed to load ONNX model: %s\n", model_path);
-        ort->ReleaseSessionOptions(session_options);
-        ort->ReleaseEnv(env);
-        return -1;
-    }
+    const char* msg = ort->GetErrorMessage(status);
+    fprintf(stderr, "Failed to load ONNX model: %s\n", model_path);
+    fprintf(stderr, "ONNX Runtime Error: %s\n", msg);
+    ort->ReleaseStatus(status);
+    ort->ReleaseSessionOptions(session_options);
+    ort->ReleaseEnv(env);
+    return -1;
+}
 
     printf("ONNX model loaded successfully: %s\n", model_path);
 
