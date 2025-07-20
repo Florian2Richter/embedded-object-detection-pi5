@@ -33,3 +33,17 @@ Adjust `CMakeLists.txt` or set the `ONNX_DIR` variable if your ONNX Runtime inst
 - `CMakeLists.txt` – Build configuration linking against ONNX Runtime.
 
 The project is at an early stage and currently only tests that a model can be loaded.  Further object detection logic will be added in the future.
+
+## Next Steps
+
+Several features are planned as the project grows:
+
+- **Test video script** – `test_video.py` processes a video file or camera input and draws bounding boxes using a loaded ONNX model. Run it with:
+  ```bash
+  python3 test_video.py <video.mp4>
+  ```
+- **Optimized inference on the Pi 5** – Evaluate execution providers in ONNX Runtime, compare against TFLite and OpenCV DNN, and investigate leveraging the Raspberry Pi 5 NPU when available.
+- **Live camera detection** – Pass a camera index (e.g. `0`) to `test_video.py` to see detections from a connected camera.
+- **ROS2 integration** – Publish detection results from a ROS2 node and visualize them in RViz.
+=======
+
