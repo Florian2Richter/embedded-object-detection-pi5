@@ -45,3 +45,5 @@ Several features are planned as the project grows:
 - **Optimized inference on the Pi 5** – Evaluate execution providers in ONNX Runtime, compare against TFLite and OpenCV DNN, and investigate leveraging the Raspberry Pi 5 NPU when available.
 - **Live camera detection** – Pass a camera index (e.g. `0`) to `test_video.py` to see detections from a connected camera.
 - **ROS2 integration** – Publish detection results from a ROS2 node and visualize them in RViz.
+=======
+
