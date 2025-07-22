@@ -3,6 +3,8 @@
 
 #include <onnxruntime_c_api.h>
 
-int load_model(const OrtApi* ort, const char* model_path);
+int init_env(const OrtApi* ort, OrtEnv** env);
+int load_model(const OrtApi* ort, OrtEnv* env, const char* model_path, OrtSession** session);
+int run_inference(const OrtApi* ort, OrtSession* session, float* input_data, int64_t* input_shape);
 
-#endif // ONNX_UTILS_H
+#endif  // ONNX_UTILS_H
