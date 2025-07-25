@@ -15,7 +15,7 @@ int main() {
     printf("ONNX Runtime API Version: %s\n", OrtGetApiBase()->GetVersionString());
 
     const char* model_path = "/home/pi/repos/embedded-object-detection-pi5/model/model.onnx";
-    const char* image_path = "/home/pi/repos/embedded-object-detection-pi5/test_images/test.jpg";
+    const char* image_path = "/home/pi/repos/embedded-object-detection-pi5/test_images/test.rgb";
 
     OrtEnv* env = NULL;
     OrtSession* session = NULL;
