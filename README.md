@@ -4,6 +4,11 @@ This project demonstrates how to run ONNX object detection models on a Raspberry
 
 ## Requirements
 
+### Prerequisites for Raspberry Pi 5
+- **Ubuntu 24.04.2** - Operating system requirement for the Pi5
+- **ROS2 Jazzy** - Required for ROS2 integration and node functionality
+
+### Development Dependencies
 - C compiler with C11 support (e.g., GCC)
 - [CMake](https://cmake.org/) 3.10 or newer
 - Pre‑built ONNX Runtime library for aarch64.  By default the build expects it under:
