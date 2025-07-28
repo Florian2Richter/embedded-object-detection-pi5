@@ -173,11 +173,18 @@ int v4l2_read_frame(camera_node_t* camera) {
         
         // Ensure message data is large enough
         if (camera->image_msg->data.capacity < frame_size) {
-            sensor_msgs__msg__Image__fini(camera->image_msg);
-            if (sensor_msgs__msg__Image__init(camera->image_msg) != RCL_RET_OK) {
-                RCUTILS_LOG_ERROR("Failed to reinitialize image message");
+            // Free existing data if any
+            if (camera->image_msg->data.data) {
+                free(camera->image_msg->data.data);
+            }
+            
+            // Allocate new data buffer
+            camera->image_msg->data.data = malloc(frame_size);
+            if (!camera->image_msg->data.data) {
+                RCUTILS_LOG_ERROR("Failed to allocate image data buffer");
                 return -1;
             }
+            camera->image_msg->data.capacity = frame_size;
         }
         
         // Copy frame data
@@ -189,7 +196,12 @@ int v4l2_read_frame(camera_node_t* camera) {
         camera->image_msg->width = CAMERA_WIDTH;
         camera->image_msg->height = CAMERA_HEIGHT;
         camera->image_msg->step = CAMERA_WIDTH * 3;
-        camera->image_msg->encoding.data = "rgb8";
+        
+        // Set encoding string
+        if (camera->image_msg->encoding.data) {
+            free(camera->image_msg->encoding.data);
+        }
+        camera->image_msg->encoding.data = strdup("rgb8");
         camera->image_msg->encoding.size = 4;
         camera->image_msg->encoding.capacity = 4;
     }
@@ -264,15 +276,35 @@ int camera_node_init(camera_node_t* camera, rcl_context_t* context) {
         return -1;
     }
     
-    // Initialize image message
+        // Initialize image message
     camera->image_msg = sensor_msgs__msg__Image__create();
     if (!camera->image_msg) {
         RCUTILS_LOG_ERROR("Failed to create image message");
-            rcl_wait_set_fini(&camera->wait_set);
-    rcl_publisher_fini(&camera->publisher, &camera->node);
-    rcl_node_fini(&camera->node);
+        rcl_wait_set_fini(&camera->wait_set);
+        rcl_publisher_fini(&camera->publisher, &camera->node);
+        rcl_node_fini(&camera->node);
         return -1;
     }
+    
+    // Initialize message fields
+    size_t frame_size = CAMERA_WIDTH * CAMERA_HEIGHT * 3; // RGB24
+    camera->image_msg->data.data = malloc(frame_size);
+    if (!camera->image_msg->data.data) {
+        RCUTILS_LOG_ERROR("Failed to allocate initial image data buffer");
+        sensor_msgs__msg__Image__destroy(camera->image_msg);
+        rcl_wait_set_fini(&camera->wait_set);
+        rcl_publisher_fini(&camera->publisher, &camera->node);
+        rcl_node_fini(&camera->node);
+        return -1;
+    }
+    camera->image_msg->data.capacity = frame_size;
+    camera->image_msg->data.size = 0;
+    camera->image_msg->width = CAMERA_WIDTH;
+    camera->image_msg->height = CAMERA_HEIGHT;
+    camera->image_msg->step = CAMERA_WIDTH * 3;
+    camera->image_msg->encoding.data = strdup("rgb8");
+    camera->image_msg->encoding.size = 4;
+    camera->image_msg->encoding.capacity = 4;
     
     // Initialize V4L2 camera
     if (v4l2_open_device(camera, CAMERA_DEVICE) != 0) {
@@ -299,6 +331,13 @@ int camera_node_init(camera_node_t* camera, rcl_context_t* context) {
 
 void camera_node_fini(camera_node_t* camera) {
     if (camera->image_msg) {
+        // Free allocated memory
+        if (camera->image_msg->data.data) {
+            free(camera->image_msg->data.data);
+        }
+        if (camera->image_msg->encoding.data) {
+            free(camera->image_msg->encoding.data);
+        }
         sensor_msgs__msg__Image__destroy(camera->image_msg);
         camera->image_msg = NULL;
     }
