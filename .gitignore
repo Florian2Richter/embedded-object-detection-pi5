@@ -3,3 +3,8 @@ build/
 *.so
 *.log
 detector
+
+# ROS2 build artifacts
+ros2_nodes/*/build/
+ros2_nodes/*/install/
+ros2_nodes/*/log/

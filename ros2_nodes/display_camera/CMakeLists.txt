@@ -10,7 +10,7 @@ find_package(ament_cmake REQUIRED)
 find_package(rcl REQUIRED)
 find_package(rcutils REQUIRED)
 find_package(sensor_msgs REQUIRED)
-find_package(OpenCV REQUIRED)
+find_package(SDL2 REQUIRED)
 
 # Add executable
 add_executable(image_display_node src/image_display_node.c)
@@ -29,7 +29,7 @@ ament_target_dependencies(image_display_node
   rcutils
   sensor_msgs)
 
-target_link_libraries(image_display_node ${OpenCV_LIBS})
+target_link_libraries(image_display_node SDL2::SDL2)
 
 # Install targets
 install(TARGETS image_display_node
