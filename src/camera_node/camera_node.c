@@ -51,7 +51,7 @@ int v4l2_init_device(camera_node_t* camera) {
     fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
     fmt.fmt.pix.width = CAMERA_WIDTH;
     fmt.fmt.pix.height = CAMERA_HEIGHT;
-    fmt.fmt.pix.pixelformat = V4L2_PIX_FMT_RGB24;
+    fmt.fmt.pix.pixelformat = V4L2_PIX_FMT_YUYV;
     fmt.fmt.pix.field = V4L2_FIELD_NONE;
     
     if (ioctl(camera->fd, VIDIOC_S_FMT, &fmt) == -1) {
@@ -169,7 +169,7 @@ int v4l2_read_frame(camera_node_t* camera) {
     
     // Copy frame data to ROS message
     if (camera->image_msg && camera->buffers[buf.index].start) {
-        size_t frame_size = CAMERA_WIDTH * CAMERA_HEIGHT * 3; // RGB24
+        size_t frame_size = CAMERA_WIDTH * CAMERA_HEIGHT * 2; // YUYV
         
         // Ensure message data is large enough
         if (camera->image_msg->data.capacity < frame_size) {
@@ -195,15 +195,15 @@ int v4l2_read_frame(camera_node_t* camera) {
         camera->image_msg->data.size = frame_size;
         camera->image_msg->width = CAMERA_WIDTH;
         camera->image_msg->height = CAMERA_HEIGHT;
-        camera->image_msg->step = CAMERA_WIDTH * 3;
+        camera->image_msg->step = CAMERA_WIDTH * 2;
         
         // Set encoding string
         if (camera->image_msg->encoding.data) {
             free(camera->image_msg->encoding.data);
         }
-        camera->image_msg->encoding.data = strdup("rgb8");
-        camera->image_msg->encoding.size = 4;
-        camera->image_msg->encoding.capacity = 4;
+        camera->image_msg->encoding.data = strdup("yuv422_yuy2");
+        camera->image_msg->encoding.size = 12;
+        camera->image_msg->encoding.capacity = 13;
     }
     
     // Re-queue buffer
@@ -287,7 +287,7 @@ int camera_node_init(camera_node_t* camera, rcl_context_t* context) {
     }
     
     // Initialize message fields
-    size_t frame_size = CAMERA_WIDTH * CAMERA_HEIGHT * 3; // RGB24
+    size_t frame_size = CAMERA_WIDTH * CAMERA_HEIGHT * 2; // YUYV
     camera->image_msg->data.data = malloc(frame_size);
     if (!camera->image_msg->data.data) {
         RCUTILS_LOG_ERROR("Failed to allocate initial image data buffer");
@@ -301,10 +301,10 @@ int camera_node_init(camera_node_t* camera, rcl_context_t* context) {
     camera->image_msg->data.size = 0;
     camera->image_msg->width = CAMERA_WIDTH;
     camera->image_msg->height = CAMERA_HEIGHT;
-    camera->image_msg->step = CAMERA_WIDTH * 3;
-    camera->image_msg->encoding.data = strdup("rgb8");
-    camera->image_msg->encoding.size = 4;
-    camera->image_msg->encoding.capacity = 4;
+    camera->image_msg->step = CAMERA_WIDTH * 2;
+    camera->image_msg->encoding.data = strdup("yuv422_yuy2");
+    camera->image_msg->encoding.size = 12;
+    camera->image_msg->encoding.capacity = 13;
     
     // Initialize V4L2 camera
     if (v4l2_open_device(camera, CAMERA_DEVICE) != 0) {

@@ -1,0 +1,8 @@
+source;share/embedded_object_detection_pi5/hook/cmake_prefix_path.ps1
+source;share/embedded_object_detection_pi5/hook/cmake_prefix_path.dsv
+source;share/embedded_object_detection_pi5/hook/cmake_prefix_path.sh
+source;share/embedded_object_detection_pi5/local_setup.bash
+source;share/embedded_object_detection_pi5/local_setup.dsv
+source;share/embedded_object_detection_pi5/local_setup.ps1
+source;share/embedded_object_detection_pi5/local_setup.sh
+source;share/embedded_object_detection_pi5/local_setup.zsh

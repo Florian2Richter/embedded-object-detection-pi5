@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <signal.h>
+#include <math.h>
 #include <rcutils/logging_macros.h>
 #include <rosidl_runtime_c/message_type_support_struct.h>
 
@@ -12,6 +13,45 @@ static volatile sig_atomic_t g_running = 1;
 void signal_handler(int sig) {
     (void)sig;
     g_running = 0;
+}
+
+// YUYV to RGB24 conversion function
+void yuyv_to_rgb24(const uint8_t* yuyv_data, uint8_t* rgb_data, int width, int height) {
+    for (int y = 0; y < height; y++) {
+        for (int x = 0; x < width; x += 2) {
+            int yuyv_idx = y * width * 2 + x * 2;
+            int rgb_idx = y * width * 3 + x * 3;
+            
+            uint8_t y1 = yuyv_data[yuyv_idx];
+            uint8_t u = yuyv_data[yuyv_idx + 1];
+            uint8_t y2 = yuyv_data[yuyv_idx + 2];
+            uint8_t v = yuyv_data[yuyv_idx + 3];
+            
+            // Convert YUV to RGB for first pixel
+            int c1 = y1 - 16;
+            int d = u - 128;
+            int e = v - 128;
+            
+            int r1 = (298 * c1 + 409 * e + 128) >> 8;
+            int g1 = (298 * c1 - 100 * d - 208 * e + 128) >> 8;
+            int b1 = (298 * c1 + 516 * d + 128) >> 8;
+            
+            rgb_data[rgb_idx] = (uint8_t)(r1 < 0 ? 0 : (r1 > 255 ? 255 : r1));
+            rgb_data[rgb_idx + 1] = (uint8_t)(g1 < 0 ? 0 : (g1 > 255 ? 255 : g1));
+            rgb_data[rgb_idx + 2] = (uint8_t)(b1 < 0 ? 0 : (b1 > 255 ? 255 : b1));
+            
+            // Convert YUV to RGB for second pixel
+            int c2 = y2 - 16;
+            
+            int r2 = (298 * c2 + 409 * e + 128) >> 8;
+            int g2 = (298 * c2 - 100 * d - 208 * e + 128) >> 8;
+            int b2 = (298 * c2 + 516 * d + 128) >> 8;
+            
+            rgb_data[rgb_idx + 3] = (uint8_t)(r2 < 0 ? 0 : (r2 > 255 ? 255 : r2));
+            rgb_data[rgb_idx + 4] = (uint8_t)(g2 < 0 ? 0 : (g2 > 255 ? 255 : g2));
+            rgb_data[rgb_idx + 5] = (uint8_t)(b2 < 0 ? 0 : (b2 > 255 ? 255 : b2));
+        }
+    }
 }
 
 int sdl2_init_window(display_node_t* display) {
@@ -90,9 +130,6 @@ int sdl2_update_display(display_node_t* display, const sensor_msgs__msg__Image* 
         return -1;
     }
     
-    // Note: We're using RGB24 texture format for simplicity
-    // In a production system, you'd want to handle different pixel formats properly
-    
     // Update texture with new image data
     void* pixels;
     int pitch;
@@ -102,8 +139,14 @@ int sdl2_update_display(display_node_t* display, const sensor_msgs__msg__Image* 
         return -1;
     }
     
-    // Copy image data to texture
-    memcpy(pixels, msg->data.data, msg->data.size);
+    // Check if we need to convert YUYV to RGB
+    if (strcmp(msg->encoding.data, "yuv422_yuy2") == 0) {
+        // Convert YUYV to RGB24
+        yuyv_to_rgb24(msg->data.data, (uint8_t*)pixels, msg->width, msg->height);
+    } else {
+        // Direct copy for RGB formats
+        memcpy(pixels, msg->data.data, msg->data.size);
+    }
     
     SDL_UnlockTexture(display->texture);
     
